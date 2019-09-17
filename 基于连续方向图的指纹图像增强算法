@@ -1,0 +1,107 @@
+第一种方法：基于连续方向图的指纹图像增强算法
+
+
+论文地址：http://g.wanfangdata.com.cn/details/detail.do?_type=perio&id=wdzxyjsj200703015
+
+
+先提取相关图片中的方向图（matlab）：
+%//进行指纹方向的边缘增强
+%1.直方图均衡化
+% final位初始图像
+
+bal=histeq(final);
+figure(1);
+subplot(2,2,1);
+imshow(bal,[]);
+subplot(2,2,2);
+imshow(final,[]);
+
+
+%设置高斯滤波器
+
+H1=fspecial('gaussian',[5,5],1.0);
+final_gau=imfilter(bal,H1,'replicate');
+figure(2);
+imshow(final_gau,[]);
+final_gau=mat2gray(final_gau);
+% imwrite(final_gau,'af_gaus.jpg');
+
+
+
+%进行脊部的边缘寻找
+
+max=zeros(208,208);
+ted=fopen('max1.txt','wt');
+for i=5:212
+    for j=5:212
+        sum=zeros(1,8);
+        sum1=zeros(1,8);
+        sum(1)=final_gau(i,j-2)+final_gau(i,j-4)+final_gau(i,j+2)+final_gau(i,j+4)-final_gau(i-2,j)-final_gau(i-4,j)-final_gau(i+2,j)-final_gau(i+4,j);
+        sum(2)=final_gau(i-1,j-2)+final_gau(i-2,j-4)+final_gau(i+1,j+2)+final_gau(i+2,j+4)-final_gau(i-2,j+1)-final_gau(i-4,j+2)-final_gau(i+2,j-1)-final_gau(i+4,j-2);
+        sum(3)=final_gau(i-2,j-2)+final_gau(i-4,j-4)+final_gau(i+2,j+2)+final_gau(i+4,j+4)-final_gau(i-2,j+2)-final_gau(i-4,j+4)-final_gau(i+2,j-2)-final_gau(i+4,j-4);
+        sum(4)=final_gau(i-2,j-1)+final_gau(i-4,j-2)+final_gau(i+2,j+1)+final_gau(i+4,j+2)-final_gau(i-1,j+2)-final_gau(i-2,j+4)-final_gau(i+1,j-2)-final_gau(i+2,j-4);
+        sum(5)=final_gau(i-2,j)+final_gau(i-4,j)+final_gau(i+2,j)+final_gau(i+4,j)-final_gau(i,j+2)-final_gau(i,j+4)-final_gau(i,j-2)-final_gau(i,j-4);
+        sum(6)=final_gau(i-2,j+1)+final_gau(i-4,j+2)+final_gau(i+2,j-1)+final_gau(i+4,j-2)-final_gau(i+1,j+2)-final_gau(i+2,j+4)-final_gau(i-1,j-2)-final_gau(i-2,j-4);
+        sum(7)=final_gau(i-2,j+2)+final_gau(i-2,j+2)+final_gau(i+2,j-2)+final_gau(i+2,j-2)-final_gau(i+2,j+2)-final_gau(i+4,j+4)-final_gau(i-2,j-2)-final_gau(i-4,j-4);
+        sum(8)=final_gau(i-1,j+2)+final_gau(i-2,j+4)+final_gau(i+1,j-2)+final_gau(i+2,j-4)-final_gau(i+2,j+1)-final_gau(i+4,j+2)-final_gau(i-2,j-1)-final_gau(i-4,j-2);
+        sum1=abs(sum);
+        tem=0;tag_num=1;ddq=1;
+        for tag=1:1:8
+            if sum(tag)>=tem
+                tem=sum(tag);
+                tag_num=tag;
+            end
+        end
+        if sum(tag_num)<0
+            tag_num=+8;
+        end
+         max(i-4,j-4)=tag_num;
+        fprintf(ted,'%u ',tag_num);
+    end
+    fprintf(ted,'\n');
+end
+
+这里将原文中的相关滤波进行了修改
+
+
+
+function [out_img] = filter_range(input_img,dir_img,u,v,x,y,z)
+%使用方向滤波
+%input_img ：输入的图像
+%dir_img ：前面所得到的方向的位置
+% u,v,x,y,z 分别为滤波器的的指数
+[M,N]=size(input_img);
+out_img=input_img;
+for i=5:M-4
+    for j=5:N-4
+        dir=dir_img(i,j);
+        total_self=input_img(i,g);
+        total_1=2/3*(input_img(i,j-2)+input_img(i,j+2))+1/3*(input_img(i,j-4)+input_img(i,j+4));
+        total_2=2/3*(input_img(i-1,j-2)+input_img(i+1,j+2))+1/3*(input_img(i-2,j-4)+input_img(i+2,j+4));
+        total_3=2/3*(input_img(i-2,j-2)+input_img(i+2,j+2))+1/3*(input_img(i-4,j-4)+input_img(i+4,j+4));
+        total_4=2/3*(input_img(i-2,j-1)+input_img(i+2,j+1))+1/3*(input_img(i-4,j-2)+input_img(i+4,j+2));
+        total_5=2/3*(input_img(i-2,j)+input_img(i+2,j))+1/3*(input_img(i-4,j)+input_img(i+4,j));
+        total_6=2/3*(input_img(i-2,j+1)+input_img(i+2,j-1))+1/3*(input_img(i-4,j+2)+input_img(i+4,j-2));
+        total_7=2/3*(input_img(i-2,j+2)+input_img(i+2,j-2))+1/3*(input_img(i-4,j+4)+input_img(i+4,j-4));
+        total_8=2/3*(input_img(i-1,j+2)+input_img(i+1,j-2))+1/3*(input_img(i-2,j+4)+input_img(i+2,j-4));
+        switch dir
+            case dir==1
+                tem=(total_self+total_1)*u+(total_2+total_8)*v+(total_3+total_7)*x+(total_4+total_6)*y+total_5*z;
+            case dir==2
+                tem=(total_self+total_2)*u+(total_3+total_1)*v+(total_4+total_8)*x+(total_5+total_7)*y+total_6*z;
+            case dir==3
+                tem=(total_self+total_3)*u+(total_4+total_2)*v+(total_5+total_1)*x+(total_6+total_8)*y+total_7*z;
+            case dir==4
+                tem=(total_self+total_4)*u+(total_5+total_3)*v+(total_6+total_2)*x+(total_7+total_1)*y+total_8*z;
+            case dir==5
+                tem=(total_self+total_5)*u+(total_6+total_4)*v+(total_7+total_3)*x+(total_8+total_2)*y+total_1*z;
+            case dir==6
+                tem=(total_self+total_6)*u+(total_7+total_5)*v+(total_8+total_4)*x+(total_1+total_3)*y+total_2*z;
+            case dir==7
+                tem=(total_self+total_7)*u+(total_8+total_6)*v+(total_1+total_5)*x+(total_2+total_4)*y+total_3*z;
+            case dir==8
+                tem=(total_self+total_8)*u+(total_1+total_7)*v+(total_2+total_6)*x+(total_3+total_5)*y+total_4*z;
+        end
+        out_img(i,j)=tem;
+    end
+end
