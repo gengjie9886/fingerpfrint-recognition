@@ -62,8 +62,18 @@ for i=5:212
 end
 
 这里将原文中的相关滤波进行了修改
+使用了以下空域滤波方式
+|1/3 x|-----|1/3 y|-----|1/3 z|-----|1/3 y|----- |1/3 x|
+|-----|-----|------|-----|-----|-----|------|-----|------|							
+|1/3 v|-----|2/3 x|2/3 y|2/3 z|2/3 y|2/3 x|-----|1/3 v|     	
+|-----|-----|2/3 v|------|-----|------|2/3 v|-----|-----|		
+|1/3 u|-----|2/3 u|-----|1/3 u|-----|2/3 u|-----|1/3 u|
+|-----|-----|2/3 v|------|-----|------|2/3 v|-----|-----|	
+|1/3 v|----|2/3 x |2/3 y|2/3 z|2/3 y|2/3 x|-----|1/3 v|   
+|-----|-----|------|-----|-----|-----|------|-----|-----|	       							
+|1/3 x|-----|1/3 y|-----|1/3 z|-----|1/3 y|----- |1/3 x|
 
-
+u+y+z=0，x+m=0；
 
 function [out_img] = filter_range(input_img,dir_img,u,v,x,y,z)
 %使用方向滤波
@@ -71,11 +81,11 @@ function [out_img] = filter_range(input_img,dir_img,u,v,x,y,z)
 %dir_img ：前面所得到的方向的位置
 % u,v,x,y,z 分别为滤波器的的指数
 [M,N]=size(input_img);
-out_img=input_img;
+out_img=zeros(208,208);
 for i=5:M-4
     for j=5:N-4
         dir=dir_img(i-4,j-4);
-        total_self=input_img(i,g);
+        total_self=input_img(i,j);
         total_1=2/3*(input_img(i,j-2)+input_img(i,j+2))+1/3*(input_img(i,j-4)+input_img(i,j+4));
         total_2=2/3*(input_img(i-1,j-2)+input_img(i+1,j+2))+1/3*(input_img(i-2,j-4)+input_img(i+2,j+4));
         total_3=2/3*(input_img(i-2,j-2)+input_img(i+2,j+2))+1/3*(input_img(i-4,j-4)+input_img(i+4,j+4));
@@ -85,23 +95,23 @@ for i=5:M-4
         total_7=2/3*(input_img(i-2,j+2)+input_img(i+2,j-2))+1/3*(input_img(i-4,j+4)+input_img(i+4,j-4));
         total_8=2/3*(input_img(i-1,j+2)+input_img(i+1,j-2))+1/3*(input_img(i-2,j+4)+input_img(i+2,j-4));
         switch dir
-            case dir==1
+            case 1
                 tem=(total_self+total_1)*u+(total_2+total_8)*v+(total_3+total_7)*x+(total_4+total_6)*y+total_5*z;
-            case dir==2
+            case 2
                 tem=(total_self+total_2)*u+(total_3+total_1)*v+(total_4+total_8)*x+(total_5+total_7)*y+total_6*z;
-            case dir==3
+            case 3
                 tem=(total_self+total_3)*u+(total_4+total_2)*v+(total_5+total_1)*x+(total_6+total_8)*y+total_7*z;
-            case dir==4
+            case 4
                 tem=(total_self+total_4)*u+(total_5+total_3)*v+(total_6+total_2)*x+(total_7+total_1)*y+total_8*z;
-            case dir==5
+            case 5
                 tem=(total_self+total_5)*u+(total_6+total_4)*v+(total_7+total_3)*x+(total_8+total_2)*y+total_1*z;
-            case dir==6
+            case 6
                 tem=(total_self+total_6)*u+(total_7+total_5)*v+(total_8+total_4)*x+(total_1+total_3)*y+total_2*z;
-            case dir==7
+            case 7
                 tem=(total_self+total_7)*u+(total_8+total_6)*v+(total_1+total_5)*x+(total_2+total_4)*y+total_3*z;
-            case dir==8
+            case 8
                 tem=(total_self+total_8)*u+(total_1+total_7)*v+(total_2+total_6)*x+(total_3+total_5)*y+total_4*z;
         end
-        out_img(i,j)=tem;
+        out_img(i-4,j-4)=tem;
     end
 end
